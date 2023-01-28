@@ -1,2 +1,5 @@
 # python-projects
-Becki Lee's Python projects
+
+Here's a list of Becki Lee's Python projects.
+
+- [Becki's Wordle Clone](./wordle/)
