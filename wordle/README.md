@@ -16,6 +16,12 @@ This Python script is inspired by the popular word game [Wordle](https://www.nyt
 	cd python-projects/wordle
 	```
 
+3. Install `colorama` library:
+
+	```
+	pip install colorama
+	```
+
 ## How to play
 
 **IMPORTANT:** Becki's Wordle Clone needs to access the file [words.txt](./words.txt). Make sure you're in the `wordle` directory before you run the script:
