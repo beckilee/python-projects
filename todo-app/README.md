@@ -13,6 +13,13 @@ It has one dependency:
 
 - [pytablewriter](https://pytablewriter.readthedocs.io/en/latest/pages/introduction/index.html) displays tasks in a nicely-formatted Unicode table.
 
+## Prerequisites
+
+Ensure you have the following tools installed:
+
+- Python 3.9+
+- pip
+
 ## Setup
 
 1. Clone this repo:
@@ -37,13 +44,13 @@ It has one dependency:
 
 ### Start the application
 
-Run the script:
+To start the application, run the following command:
 
 ```
 python todo-app.py
 ```
 
-When you run the script, the application looks for a database named `todo.db` in the current working directory and creates one if it does not exist. This is where the application stores your tasks.
+The application looks for a database named `todo.db` in the current working directory and creates one if it does not exist. This is where the application stores your tasks.
 
 The application then displays the main menu:
 
@@ -53,7 +60,7 @@ The application then displays the main menu:
 A - ➕ ADD a new task
 L - 📋 LIST uncompleted tasks
 C - ✅ COMPLETE a task
-U - ☝️  UPDATE a task name
+U - ☝️ UPDATE a task name
 D - ❌ DELETE a task
 S - 🔎 SEARCH all tasks (completed and uncompleted)
 X - 🚪 EXIT this application
@@ -144,7 +151,11 @@ You'll see output like the following:
 ┌────┬────────────────────────────────────────────┬────────┐
 │ ID │                    TASK                    │ DONE?  │
 ├────┼────────────────────────────────────────────┼────────┤
-│  1 │ Write an AWESOME to-do list app            │ 🚧 NO  │
+│  1 │ Write an AWESOME to-do list app            │ ✅ YES │
+├────┼────────────────────────────────────────────┼────────┤
+│  2 │ Add random quotes when task is completed   │ 🚧 NO  │
+├────┼────────────────────────────────────────────┼────────┤
+│  3 │ Go grocery shopping                        │ 🚧 NO  │
 └────┴────────────────────────────────────────────┴────────┘
 ```
 
