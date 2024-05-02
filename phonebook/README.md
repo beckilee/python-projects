@@ -1,13 +1,18 @@
 # Becki's Totally Awesome Phonebook
 
-Becki's Totally Awesome Phonebook is an interactive Python script that saves contact information that you enter.
+**Becki's Totally Awesome Phonebook** is an interactive Python script that saves contact information into a local SQLite database.
 
 It offers the following features:
 
 - [Add](#add-a-new-contact), [update](#update-a-contact), and [delete](#delete-a-contact) a contact
 - Mark a contact as a "favorite"
 - [List all contacts](#list-all-contacts) or only [favorite contacts](#list-only-favorite-contacts)
-- [Search](#search-contacts-by-category) contacts by category
+- [Search](#search-contacts) contacts by name, phone number, or email
+
+It has two dependencies:
+
+- [pytablewriter](https://pytablewriter.readthedocs.io/en/latest/pages/introduction/index.html) displays tasks in a nicely-formatted table.
+- [phonenumbers](https://pypi.org/project/phonenumbers/) formats international phone numbers.
 
 ## Setup
 
@@ -23,147 +28,173 @@ It offers the following features:
 	cd python-projects/phonebook
 	```
 
+3. Install dependencies:
+
+	```
+	pip install -r requirements.txt
+	```
+
 ## Usage
 
-To run the script:
+### Start the application
+
+To start the application, run the following command:
 
 ```
 python phonebook.py
 ```
 
-When you run the script, the application looks for a `bta_phonebook.txt` file in the current working directory and creates one if it does not exist. This is where the application will store the contact information you enter.
+The application looks for a `bta-phonebook.db` file in the current working directory and creates one if it does not exist. This is where the application stores your contacts.
 
-You'll see the following message the first time you run the script:
+The application then displays the main menu:
 
 ```
-Loading bta_phonebook.txt...
+============= ✨ BECKI'S TOTALLY AWESOME PHONEBOOK APP ✨ ==============
 
-NO PHONEBOOK FOUND! Creating a new one.
+S - 🔎 SEARCH contacts
+L - 📋 LIST all contacts
+F - 💖 Show FAVORITE contacts
+A - ➕ ADD a new contact
+U - ☝️  UPDATE a contact
+D - ❌ DELETE a contact
+Q - 🚪 QUIT this application
 
-========================BECKI'S TOTALLY AWESOME PHONEBOOK=======================
-===================================MAIN MENU====================================
-Welcome to the main menu!
-Each letter below corresponds to a task:
-
-s - Search contacts by category
-l - List all contacts
-f - List favorite contacts
-a - Add a new contact
-u - Update a contact
-d - Delete a contact
-x - Save and exit
-
-What would you like to do?
-Enter a letter:
+Enter a letter to take an action:
 ```
 
 ### Add a new contact
 
 To add a new contact:
 
-1. Enter `a` at the main menu.
+1. Enter `A` at the main menu.
 2. Enter the following information:
-	- First name
+	- First name *(required)*
 	- Last name
-	- One or more phone numbers
-	- One or more email addresses
-	- `Y` to optionally mark the contact as a favorite
+	- Phone number. Non-U.S. numbers must begin with a plus sign and country code (for example, `+44`). U.S. numbers don't need any special formatting.
+	- Email address
+	- `Y` to set contact as a favorite, or `N` to skip
 
-After you enter this information, you'll be returned to the main menu.
+You'll see the following output:
+
+```
+👍 Contact added!
+```
 
 ### List all contacts
 
-To list all contacts, enter `l` at the main menu.
+To list all contacts:
+
+1. Enter `L` at the main menu.
 
 The application displays a table with the following information for each contact:
 
-- A heart emoji, if the contact is a favorite
+- A heart emoji (💖), if the contact is a favorite
 - Unique ID
-- First name
-- Last name
-- Phone number(s)
-- Email address(es)
+- First and last name
+- Phone number
+- Email address
 
 For example:
 
 ```
-------------------------------LIST OF ALL CONTACTS------------------------------
-Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)
---------------------------------------------------------------------------------
-
-  1. Yusuke Kitagawa, 222-222-2222, yusuke@example.com
-❤️ 2. Becki Lee, 123-456-7890, becki.lee@gmail.com
-  3. Ryuji Sakamoto, 111-111-1111, ryuji@example.com
-  4. Ann Takamaki, 000-000-0000, ann@example.com, ann@example2.com
+💖  ID       NAME             PHONE                EMAIL
+     1  Becki Lee        +1 301-555-5555   becki.lee@gmail.com
+💖   2  Ryuji Sakamoto   +81 3-3123-4567   ryuji@omgbeckilee.com
+     3  Yusuke Kitigawa  +44 20 7946 0958  yusuke@omgbeckilee.com
+     4  Ann Takamaki     +1 416-555-5555   ann@omgbeckilee.com
 ```
 
 ### List only favorite contacts
 
-To list only favorite contacts, enter `f` at the main menu.
+To list only favorite contacts:
+
+1. Enter `F` at the main menu.
+
+The application displays a table with the following information for each favorited contact:
+
+- A heart emoji (💖)
+- Unique ID
+- First and last name
+- Phone number
+- Email address
+
+For example:
+
+```
+💖  ID       NAME            PHONE               EMAIL
+💖   2  Ryuji Sakamoto  +81 3-3123-4567  ryuji@omgbeckilee.com
+```
 
 ### Update a contact
 
 To update a contact:
 
-1. Enter `u` at the main menu.
-2. Enter one of the following values:
-	- The unique ID of the contact you want to update
-	- `M` to return to the main menu
-	- `D` to display the list of contacts, so you can find the contact's unique ID
-3. When you enter the contact's unique ID, the phonebook displays the contact's information.
-4. Enter `Y` to confirm you want to proceed with the update, or enter `N` to select a different contact.
-5. After confirming, enter the following information:
+1. Enter `U` at the main menu.
+2. Enter the unique ID of the contact you plan to update.
+	- You can also enter `L` to list all contacts and their IDs, or `Q` to quit and return to the main menu.
+3. Enter `Y` to confirm that you want to update the displayed contact.
+	- Alternatively, enter `N` to cancel and select a different contact.
+4. Enter the information you want to update. You can leave a field blank to keep its current value.
 	- First name
 	- Last name
 	- Phone number(s)
 	- Email address(es)
+	- `Y` to set contact as a favorite, or `N` to skip
 
-The application then returns you to the main menu.
-
-### Search contacts by category
-
-To search contacts by category:
-
-1. Enter `s` at the main menu.
-2. Enter the letter for the category you want to search:
-	- `n` for name
-	- `p` for phone
-	- `e` for email
-3. Enter the search query.
-
-You'll see output like this:
+You'll see the following output:
 
 ```
--------------------------------SEARCH RESULTS-------------------------------
-Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)
-----------------------------------------------------------------------------
-
-Entries matching example:
-
-  1. Yusuke Kitagawa, 222-222-2222, yusuke@example.com
-  3. Ryuji Sakamoto, 111-111-1111, ryuji@example.com
-  4. Ann Takamaki, 000-000-0000, ann@example.com, ann@example2.com
+👍 Contact updated!
 ```
 
-The application then returns you to the main menu.
+### Search contacts
+
+To search contacts by name, phone, or email:
+
+1. Enter `S` at the main menu.
+2. Enter the letter for the category you plan to search:
+	- `N` for name
+	- `P` for phone
+	- `E` for email
+3. Enter the search query, or press `Enter` to return all contacts.
+    - **Note:** The application supports partial matches and is case insensitive. For example, searching names for `t` returns all names with a `t` or `T` in them.
+
+You'll see output like the following:
+
+```
+Entries matching 'OMG':
+💖  ID       NAME             PHONE                EMAIL
+💖   2  Ryuji Sakamoto   +81 3-3123-4567   ryuji@omgbeckilee.com
+     3  Yusuke Kitigawa  +44 20 7946 0958  yusuke@omgbeckilee.com
+     4  Ann Takamaki     +1 416-555-5555   ann@omgbeckilee.com
+```
 
 ### Delete a contact
 
 To delete a contact:
 
-1. Enter `d` at the main menu.
-2. Enter one of the following values:
-	- The unique ID of the contact you want to delete
-	- `M` to return to the main menu
-	- `D` to display the list of contacts, so you can find the contact's unique ID
-3. When you enter the contact's unique ID, the phonebook displays the contact's information.
-4. Enter `Y` to confirm you want to proceed with the deletion, or enter `N` to select a different contact.
+1. Enter `D` at the main menu.
+2. Enter the unique ID of the contact you plan to delete.
+	- You can also enter `L` to list all contacts and their IDs, or `Q` to quit and return to the main menu.
+3. Enter `Y` to confirm that you want to delete the displayed contact, or enter `N` to cancel and select a different contact.
 
-After you confirm, the application deletes the contact and returns you to the main menu.
+You'll see the following output upon confirmation:
 
-### Save and exit
+```
+🗑️ Contact deleted!
+```
 
-To save and exit, enter `x`. The application saves your data to `bta_phonebook.txt` in the current working directory.
+### Quit the application
+
+To quit the application:
+
+1. Enter `Q` at the main menu.
+
+You'll see the following output:
+
+```
+👋 Thanks for using BECKI'S TOTALLY AWESOME PHONEBOOK APP! Goodbye!
+```
 
 ## Contact me!
 

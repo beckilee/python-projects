@@ -1,640 +1,409 @@
-# Becki's Totally Awesome Phonebook!
+# Becki's Totally Awesome Phonebook App!
+# Now with ~even more awesome~
 
-import sys
+import sqlite3
+from sqlite3 import Error
+from pytablewriter import SpaceAlignedTableWriter
+import phonenumbers
 
-# Function to delete an entry from the phonebook, using the current phonebook as argument
-def delete_entry(delete_entry_list):
-    confirm = False
-    found = False
-    # Loop until user enters appropriate input: a user ID to delete, return to main menu, or display list of contacts
-    while True:
-        delete_id = input("If you know the unique ID of the user you want to delete, enter the ID. Or, enter M to return to the main menu, or D to display the list of contacts: ")
-        # Print list of contacts
-        if delete_id.lower() == "d":
-            display_all(delete_entry_list)
-            print("")
-            continue
-        # Return the argument unchanged
-        if delete_id.lower() == "m":
-            return delete_entry_list
-        # Try to list the contact according to ID, or handle exception if it is the wrong type or doesn't exist
-        try:
-            # Loop through phonebook to find the user with the given ID
-            for entry in delete_entry_list:
-                # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-                if entry["id"] == int(delete_id):
-                    if entry["fave"] == "y":
-                        fave = "❤️"
-                    else:
-                        fave = " "
-                    # The ID number (minus 1) corresponds to the index in the list, so convert it to a string
-                    id_str = str(delete_entry_list[int(delete_id) - 1]["id"])
-                    # Print corresponding contact on a single line
-                    print(fave + " " + id_str + ". " + delete_entry_list[int(delete_id) - 1]["first_name"] + " " + delete_entry_list[int(delete_id) - 1]["last_name"], end=", ")
-                    # This is part of the same line; print all phone numbers
-                    for phone in delete_entry_list[int(delete_id) - 1]["phone"]:
-                        print(phone, end=", ")
-                    # This is part of the same line; add comma after each email address except the last one
-                    for i in range(0, len(delete_entry_list[int(delete_id) - 1]["email"])):
-                        if i == len(delete_entry_list[int(delete_id) - 1]["email"]) - 1:
-                            print(delete_entry_list[int(delete_id) - 1]["email"][i], end="\n")
-                        else:
-                            print(delete_entry_list[int(delete_id) - 1]["email"][i], end=", ")
-                    # Since we found the matching contact, set flag to True
-                    found = True
-            # Since we didn't find the matching contact, print nice error message
-            if found == False:
-                    print("Sorry, that ID doesn't exist. Please try again.")
-                    continue
-        # Catch exception
-        except:
-            print("Sorry, that wasn't a number. Please try again.")
-            continue
-        # If the user confirms the user shown is correct, continue with deletion workflow; if they say no or if they enter an incorrect option, start loop over
-        confirm_id = input("Do you want to delete this user? Enter Y for yes, N for no: ")
-        if confirm_id.lower() == "y" or confirm_id.lower() == "yes":
-            confirm = True
-            break
-        elif confirm_id.lower() == "n" or confirm_id.lower() == "no":
-            print("OK, we won't delete that user. Let's try again.")
-            continue
-        else:
-            print("Sorry, that's not an option. Please try again.")
-            continue
-    # If the user confirmed the deletion, delete the entry and call function to sort the remaining contacts to be in alphabetical order by last name, renumbering IDs accordingly
-    if confirm == True:
-        del delete_entry_list[int(delete_id) - 1]
-        sorted_delete_entry_list = sort_contact(delete_entry_list)
-    print("Contact has been deleted.\n")
-
-    # Return the updated and sorted contact list
-    return sorted_delete_entry_list
-
-
-# Function to update an entry in the phonebook, using the current phonebook as argument
-def update_entry(update_entry_list):
-    confirm = False
-    found = False
-    # Loop until user enters appropriate input: a user ID to update, return to main menu, or display list of contacts
-    while True:
-        update_id = input("If you know the unique ID of the user you want to update, enter the ID. Or, enter M to return to the main menu, or D to display the list of contacts: ")
-        # Print list of contacts
-        if update_id.lower() == "d":
-            display_all(update_entry_list)
-            print("")
-            continue
-        # Return the argument unchanged
-        if update_id.lower() == "m":
-            return update_entry_list
-        # Try to list the contact according to ID, or handle exception if it is the wrong type or doesn't exist
-        try:
-            # Loop through phonebook to find user with the given ID
-            for entry in update_entry_list:
-                # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-                if entry["id"] == int(update_id):
-                    if entry["fave"] == "y":
-                        fave = "❤️"
-                    else:
-                        fave = " "
-                    # The ID number (minus 1) corresponds to the index in the list, so convert it to a string
-                    id_str = str(update_entry_list[int(update_id) - 1]["id"])
-                    # Print corresponding contact on a single line
-                    print(fave + " " + id_str + ". " + update_entry_list[int(update_id) - 1]["first_name"] + " " + update_entry_list[int(update_id) - 1]["last_name"], end=", ")
-                    # This is part of the same line; print all phone numbers
-                    for phone in update_entry_list[int(update_id) - 1]["phone"]:
-                        print(phone, end=", ")
-                    # This is part of the same line; add comma after each email address except the last one
-                    for i in range(0, len(update_entry_list[int(update_id) - 1]["email"])):
-                        if i == len(update_entry_list[int(update_id) - 1]["email"]) - 1:
-                            print(update_entry_list[int(update_id) - 1]["email"][i], end="\n")
-                        else:
-                            print(update_entry_list[int(update_id) - 1]["email"][i], end=", ")
-                    # Since we found the matching contact, set flag to True
-                    found = True
-            # Since we didn't find the matching contact, print nice error message
-            if found == False:
-                    print("Sorry, that ID doesn't exist. Please try again.")
-                    continue
-        # Catch exception
-        except:
-            print("Sorry, that wasn't a number. Please try again.")
-            continue
-        # If the user confirms the user shown is correct, continue with update workflow; if they say no or if they enter an incorrect option, start loop over
-        confirm_id = input("Do you want to update this user? Enter Y for yes, N for no: ")
-        if confirm_id.lower() == "y" or confirm_id.lower() == "yes":
-            confirm = True
-            break
-        elif confirm_id.lower() == "n" or confirm_id.lower() == "no":
-            print("OK, we won't update that user. Let's try again.")
-            continue
-        else:
-            print("Sorry, that's not an option. Please try again.")
-            continue
-    # If the user confirmed the update, prompt for new information and call function to sort the updated list of contacts to be in alphabetical order by last name, renumbering IDs accordingly
-    if confirm == True:
-        first = input("Enter the updated contact's first name: ")
-        last = input("Enter the contact's last name: ")
-        email = ""
-        phone = ""
-        phone_list = list()
-        email_list = list()
-        # Loop phone entry until user says they're "done"
-        while True:
-            if phone.lower() == "done":
-                break
-            else:
-                phone = input("Enter a phone number, or DONE when you're done: ")
-                if phone.lower() == "done":
-                    continue
-                phone_list.append(phone)
-                continue
-        # Loop email entry until user says they're "done"
-        while True:
-            if email.lower() == "done":
-                break
-            else:
-                email = input("Enter an email address, or DONE when you're done: ")
-                if email.lower() == "done":
-                    continue
-                email_list.append(email)
-                continue
-        fave = input("Enter Y if you want to mark this contact as a favorite, otherwise enter anything else: ")
-        if fave.lower() == "y":
-            fave = "y"
-        else:
-            fave = "n"
-        # Update-in-place the entry corresponding to ID
-        update_entry_list[int(update_id) - 1] = { "fave" : fave, "id" : "temp_id", "first_name" : first, "last_name" : last, "phone" : phone_list, "email" : email_list }
-        # Call function to sort updated contact list
-        sorted_update_entry_list = sort_contact(update_entry_list)
-        # Print updated contact details
-        print("Updated entry:")
-        # The ID number (minus 1) corresponds to the index in the list, so convert it to a string
-        id_str = str(sorted_update_entry_list[int(update_id) - 1]["id"])
-        # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-        if fave == "y":
-            fave = "❤️"
-        else:
-            fave = " "
-        # Print corresponding contact on a single line
-        print(fave + " " + id_str + ". " + sorted_update_entry_list[int(update_id) - 1]["first_name"] + " " + sorted_update_entry_list[int(update_id) - 1]["last_name"], end=", ")
-        # This is part of the same line; print all phone numbers
-        for phone in sorted_update_entry_list[int(update_id) - 1]["phone"]:
-            print(phone, end=", ")
-        # This is part of the same line; add comma after each email address except the last one
-        for i in range(0, len(sorted_update_entry_list[int(update_id) - 1]["email"])):
-            if i == len(sorted_update_entry_list[int(update_id) - 1]["email"]) - 1:
-                print(sorted_update_entry_list[int(update_id) - 1]["email"][i], end="\n")
-            else:
-                print(sorted_update_entry_list[int(update_id) - 1]["email"][i], end=", ")
-    print("")
-
-    # Return the updated and sorted contact list
-    return sorted_update_entry_list
-
-
-# Function to add an entry to the phonebook, using the current phonebook as argument
-def add_entry(old_entry_list):
-    # Prompt for new contact info and call function to sort the updated contacts to be in alphabetical order by last name, renumbering IDs accordingly
-    first = input("Enter the new contact's first name: ")
-    last = input("Enter the last name: ")
-    email = ""
-    phone = ""
-    phone_list = list()
-    email_list = list()
-    add_entry_list = list()
-    # Loop phone entry until user says they're "done"
-    while True:
-        if phone.lower() == "done":
-            break
-        else:
-            phone = input("Enter a phone number, or DONE when you're done: ")
-            if phone.lower() == "done":
-                continue
-            phone_list.append(phone)
-            continue
-    # Loop phone entry until user says they're "done"
-    while True:
-        if email.lower() == "done":
-            break
-        else:
-            email = input("Enter an email address, or DONE when you're done: ")
-            if email.lower() == "done":
-                continue
-            email_list.append(email)
-            continue
-    fave = input("Enter Y if you want to mark this contact as a favorite, otherwise enter anything else: ")
-    if fave.lower() == "y":
-        fave = "y"
-    else:
-        fave = "n"
-    # Assign new contact info to a new entry
-    new_entry = { "fave" : fave, "id" : "temp_id", "first_name" : first, "last_name" : last, "phone" : phone_list, "email" : email_list }
-    # Add new entry to the list of contacts
-    old_entry_list.append(new_entry)
-    # Call function to sort the updated contact list
-    add_entry_list = sort_contact(old_entry_list)
-    print("")
-
-    # Return the updated and sorted contact list
-    return add_entry_list
-
-
-# Function to search contacts by name, using the current phonebook as argument
-def name_search(query, search_entry_list):
-    print("")
-    found = False
-    # If the user doesn't enter a query, print all entries
-    if query == "":
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("No query submitted; printing all entries:\n")
-    # If the user enters a query, actually perform the search
-    else:
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("Entries matching " + query + ":\n")
-    # Loop through contact list (list of dicts) to see if the query matches ANY PART of the first name or last name
-    for entry in search_entry_list:
-        # If there's a match, print each one out on a single line
-        if query.lower() in entry["first_name"].lower() or query.lower() in entry["last_name"].lower():
-            fave = str()
-            # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-            if entry["fave"] == "y":
-                fave = "❤️"
-            else:
-                fave = " "
-            # The ID number (minus 1) corresponds to the index in the list, so convert it to a string
-            id_str = str(entry["id"])
-            # Print corresponding contact on a single line
-            print(fave + " " + id_str + ". " + entry["first_name"] + " " + entry["last_name"], end=", ")
-            # This is part of the same line; print all phone numbers
-            for phone in entry["phone"]:
-                print(phone, end=", ")
-            # This is part of the same line; add comma after each email address except the last one
-            for i in range(0, len(entry["email"])):
-                if i == len(entry["email"]) - 1:
-                    print(entry["email"][i], end="\n")
-                else:
-                    print(entry["email"][i], end=", ")
-            # Since we found a matching contact, set flag to True
-            found = True
-    # Since we didn't find ANY matching contact, print nice error message
-    if found == False:
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("No entries found")
-    print("")
-
-
-# Function to search contacts by phone number, using the current phonebook as argument
-def phone_search(query, search_entry_list):
-    print("")
-    found = False
-    # If the user doesn't enter a query, print all entries
-    if query == "":
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("No query submitted; printing all entries:\n")
-        display_all(search_entry_list)
-        found = True
-    # If the user enters a query, actually perform the search
-    else:
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("Entries matching " + query + ":\n")
-        dupe_list = list()
-        # Loop through phone list in contact list (a list of strings in a dict in a list) to see if the query matches ANY PART of any phone numbers in an entry
-        for entry in search_entry_list:
-            for phone in entry["phone"]:
-                for i in range(0, len(phone)):
-                    # If there's a match, print each one out on a single line
-                    if query in phone:
-                        # If the contact already has one phone number that matches, break out of the loop and go to the next contact (to avoid printing the same contact multiple times)
-                        if entry["id"] in dupe_list:
-                            break
-                        # If it's the first time a contact has matched a phone number, add it to a list (to avoid printing the same contact multiple times)
-                        dupe_list.append(entry["id"])
-                        fave = str()
-                        # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-                        if entry["fave"] == "y":
-                            fave = "❤️"
-                        else:
-                            fave = " "
-                        # The ID number (minus 1) corresponds to the index in the list, so convert it to a string
-                        id_str = str(entry["id"])
-                        # Print corresponding contact on a single line
-                        print(fave + " " + id_str + ". " + entry["first_name"] + " " + entry["last_name"], end=", ")
-                        # This is part of the same line; print all phone numbers
-                        for phone in entry["phone"]:
-                            print(phone, end=", ")
-                        # This is part of the same line; add comma after each email address except the last one
-                        for i in range(0, len(entry["email"])):
-                            if i == len(entry["email"]) - 1:
-                                print(entry["email"][i], end="\n")
-                            else:
-                                print(entry["email"][i], end=", ")
-                        # Since we found a matching contact, set flag to True
-                        found = True
-                    break
-    # Since we didn't find ANY matching contact, print nice error message
-    if found == False:
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("No entries found")
-    print("")
-
-
-# Function to search contacts by email address, using the current phonebook as argument
-def email_search(query, search_entry_list):
-    print("")
-    found = False
-    # If the user doesn't enter a query, print all entries
-    if query == "":
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("No query submitted; printing all entries with email addresses:\n")
-        display_all(search_entry_list)
-        found = True
-    # If the user enters a query, actually perform the search
-    else:
-        print("-------------------------------SEARCH RESULTS-------------------------------")
-        print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-        print("----------------------------------------------------------------------------\n")
-        print("Entries matching " + query + ":\n")
-        dupe_list = list()
-        # Loop through email list in contact list (a list of strings in a dict in a list) to see if the query matches ANY PART of any email addresses in an entry
-        for entry in search_entry_list:
-            for email in entry["email"]:
-                for i in range(0, len(email)):
-                    # If there's a match, print each one out on a single line
-                    if query.lower() in email.lower():
-                        # If the contact already has one email that matches, break out of the loop and go to the next contact (to avoid printing the same contact multiple times)
-                        if entry["id"] in dupe_list:
-                            break
-                        # If it's the first time a contact has matched an email, add it to a list (to avoid printing the same contact multiple times)
-                        dupe_list.append(entry["id"])
-                        fave = str()
-                        # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-                        if entry["fave"] == "y":
-                            fave = "❤️"
-                        else:
-                            fave = " "
-                        # The ID number (minus 1) corresponds to the index in the list, so convert it to a string
-                        id_str = str(entry["id"])
-                        # Print corresponding contact on a single line
-                        print(fave + " " + id_str + ". " + entry["first_name"] + " " + entry["last_name"], end=", ")
-                        # This is part of the same line; print all phone numbers
-                        for phone in entry["phone"]:
-                            print(phone, end=", ")
-                        # This is part of the same line; add comma after each email address except the last one
-                        for i in range(0, len(entry["email"])):
-                            if i == len(entry["email"]) - 1:
-                                print(entry["email"][i], end="\n")
-                            else:
-                                print(entry["email"][i], end=", ")
-                        # Since we found a matching contact, set flag to True
-                        found = True
-                    break
-    # Since we didn't find ANY matching contact, print nice error message
-    if found == False:
-        print("No entries found")
-    print("")
-
-
-# Function to display all entries in the phonebook, using the current phonebook as argument
-def display_all(display_entry_list):
-    print("------------------------------LIST OF ALL CONTACTS------------------------------")
-    print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-    print("--------------------------------------------------------------------------------\n")
-    # If there aren't any entries, print a nice error message
-    if len(display_entry_list) == 0:
-        print("No entries found")
-    # If there are any entries, print each on a single line
-    else:
-        fave = str()
-        # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-        for entry in display_entry_list:
-            if entry["fave"] == "y":
-                fave = "❤️"
-            else:
-                fave = " "
-            # Convert the ID to a string
-            id_str = str(entry["id"])
-            # Print corresponding contact on a single line
-            print(fave + " " + id_str + ". " + entry["first_name"] + " " + entry["last_name"], end=", ")
-            # This is part of the same line; print all phone numbers
-            for phone in entry["phone"]:
-                print(phone, end=", ")
-            # This is part of the same line; add comma after each email address except the last one
-            for i in range(0, len(entry["email"])):
-                if i == len(entry["email"]) - 1:
-                    print(entry["email"][i], end="\n")
-                else:
-                    print(entry["email"][i], end=", ")
-    print("")
-
-
-# Function to display all FAVORITE entries in the phonebook, using the current phonebook as argument
-def display_faves(fave_entry_list):
-    print("---------------------------LIST OF FAVORITE CONTACTS----------------------------")
-    print("Favorite | Unique ID | First Name | Last Name | Phone Number(s) | Email Address(es)")
-    print("--------------------------------------------------------------------------------\n")
-    fave = str()
-    is_fave = False
-    # If there are any entries, print each on a single line
-    for entry in fave_entry_list:
-        # Print favorites with a unicode heart instead of a "y", print non-favorites with a blank space
-        if entry["fave"] == "y":
-            fave = "❤️"
-            is_fave = True
-            # Convert the ID to a string
-            id_str = str(entry["id"])
-            # Print corresponding contact on a single line
-            print(fave + " " + id_str + ". " + entry["first_name"] + " " + entry["last_name"], end=", ")
-            # This is part of the same line; print all phone numbers
-            for phone in entry["phone"]:
-                print(phone, end=", ")
-            # This is part of the same line; add comma after each email address except the last one
-            for i in range(0, len(entry["email"])):
-                if i == len(entry["email"]) - 1:
-                    print(entry["email"][i], end="\n")
-                else:
-                    print(entry["email"][i], end=", ")
-    # If there aren't any favorites, print a nice error message
-    if is_fave == False:
-        print("No favorites found")
-    print("")
-
-
-# Function to display main menu and prompt user for a choice, using current phonebook as argument
-def menu(current_entry_list):
-    # Loop main menu list and input prompt until they enter a choice
-    while True:
-        print("===================================MAIN MENU====================================")
-        print("Welcome to the main menu!")
-        print("Each letter below corresponds to a task:\n")
-        print("s - Search contacts by category")
-        print("l - List all contacts")
-        print("f - List favorite contacts")
-        print("a - Add a new contact")
-        print("u - Update a contact")
-        print("d - Delete a contact")
-        print("x - Save and exit")
-        print("")
-        print("What would you like to do?")
-        # Call the function corresponding to the action the user entered, using the current phone book as argument; user starts loop again after a function is finished
-        choice = input("Enter a letter: ")
-        if choice.lower() == "s":
-            print("")
-            search_menu(current_entry_list)
-            continue
-        if choice.lower() == "l":
-            print("")
-            display_all(current_entry_list)
-            print("")
-            continue
-        if choice.lower() == "f":
-            print("")
-            display_faves(current_entry_list)
-            print("")
-            continue
-        if choice.lower() == "a":
-            print("")
-            current_entry_list = add_entry(current_entry_list)
-            continue
-        if choice.lower() == "u":
-            current_entry_list = update_entry(current_entry_list)
-            continue
-        if choice.lower() == "d":
-            current_entry_list = delete_entry(current_entry_list)
-            continue
-        if choice.lower() == "x":
-            exit_app(current_entry_list)
-        # Print nice error message if the user enters anything that doesn't correspond to a menu action
-        else:
-            print("Sorry, that's not an option. Please try again: ")
-
-
-# Function to display a menu listing search actions and prompt user for a choice, using current phonebook as argument
-def search_menu(current_entry_list):
-    print("How would you like to search?")
-    print("Each letter below corresponds to a task:\n")
-    print("n - Search by name")
-    print("p - Search by phone")
-    print("e - Search by email\n")
-    # Loop search menu list and input prompt until they enter a choice
-    while True:
-        choice = input("Enter a letter: ")
-        # Call the function corresponding to the action the user entered; user returns to main menu after a function is finished
-        if choice.lower() == "n":
-            query = input("\nEnter a name, or as many letters as you know: ")
-            name_search(query, current_entry_list)
-            break
-        if choice.lower() == "p":
-            query = input("\nEnter a phone number, or as many digits as you know: ")
-            phone_search(query, current_entry_list)
-            break
-        if choice.lower() == "e":
-            query = input("\nEnter an email address, or as many letters as you know: ")
-            email_search(query, current_entry_list)
-            break
-        # Print nice error message if the user enters anything that doesn't correspond to a menu action, then start loop over
-        else:
-            print("Sorry, that's not an option. Please try again: ")
-
-
-# Function to sort a contact list in alphabetical order by last name (case insensitive) and then by first name, then renumber the contact IDs according to new order, using current phonebook as argument
-def sort_contact(raw_entry_list):
-    sorted_entry_list = list()
-    # Inspiration from https://www.geeksforgeeks.org/ways-sort-list-dictionaries-values-python-using-lambda-function/ and https://docs.python.org/3.7/library/functions.html#sorted
-    # Sort by last name, then by first name (case insensitive)
-    unsorted_entry_list = sorted(raw_entry_list, key = lambda i: (i["last_name"].lower(), i["first_name"].lower()))
-    # Renumber the contact list IDs according to new order
-    for i in range(0, len(unsorted_entry_list)):
-        unsorted_entry_list[i] = { "fave" : unsorted_entry_list[i]["fave"], "id" : "temp_id", "first_name" : unsorted_entry_list[i]["first_name"], "last_name" : unsorted_entry_list[i]["last_name"], "phone": unsorted_entry_list[i]["phone"], "email": unsorted_entry_list[i]["email"] }
-        # Add 1 to the index so ID numbering starts at 1 instead of 0
-        unsorted_entry_list[i]["id"] = i + 1
-        # Add each updated entry to a new list
-        sorted_entry_list.append(unsorted_entry_list[i])
-
-    # Return the sorted contact list
-    return sorted_entry_list
-
-
-# Function to load the phonebook, or create one if it doesn't exist
-def load():
-    sorted_entry_list = list()
-    print("Loading bta_phonebook.txt...\n")
-    # Try to load the phonebook file, and handle exception if the file doesn't exist
+# Create database if it doesn't exist; otherwise, connect to it
+def create_connection():
     try:
-        fhand = open("bta_phonebook.txt")
-    # If file doesn't exist, create new file and return the blank contact list
-    except:
-        fhand = open("bta_phonebook.txt", "w")
-        print("NO PHONEBOOK FOUND! Creating a new one.\n")
-        return sorted_entry_list
-    raw_entry_list = list()
-    # Loop to process each comma-separated category (and semicolon-separated list within the category items, i.e., phone numbers and email addresses)
-    for line in fhand:
-        line = line.strip()
-        line = line.split(",")
-        # If there are not enough categories or too many categories, print nice error message and exit gracefully
-        if len(line) != 6:
-            print("Sorry, each entry in the phone book should have six categories separated by commas. If you don't want to fill out a category, leave it blank but leave the commas around it. Please check bta_phonebook.txt and run the program again.")
-            sys.exit(0)
-        # Grab contents of each category
-        fave = line[0]
-        first_name = line[2]
-        last_name = line[3]
-        phone = line[4]
-        phone = phone.split(";")
-        email = line[5]
-        email = email.split(";")
-        # Assign each category to a dict key-value pair
-        unsorted_entry = { "fave" : fave, "first_name" : first_name, "last_name" : last_name, "phone": phone, "email": email }
-        # Assign each dict to a list
-        raw_entry_list.append(unsorted_entry)
-        # Call function to sort list and number IDs accordingly
-        sorted_entry_list = sort_contact(raw_entry_list)
-    # Close file when done reading from it
-    fhand.close()
+        connection = sqlite3.connect('bta-phonebook.db')
+        return connection
+    except Error as e:
+        print("❗️ Sorry, we encountered an error: ", e)
+        connection.close()
+        exit(1)
 
-    # Return the new/sorted contact list
-    return sorted_entry_list
+# Create contacts table if it doesn't exist
+def create_contacts_table(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(""" CREATE TABLE IF NOT EXISTS contacts (
+                        contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        first_name TEXT NOT NULL,
+                        last_name TEXT,
+                        phone TEXT,
+                        email TEXT
+                        ); """)
+        conn.commit()
+        cursor.close()
+    except Error as e:
+        print("❗️ Sorry, we encountered an error creating the table: ", e)
+        print("Please contact becki.lee@gmail.com with details so I can help you troubleshoot!")
+        conn.close()
+        exit(1)
 
+# Create favorites table if it doesn't exist
+def create_faves_table(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(""" CREATE TABLE IF NOT EXISTS favorites (
+                        favorite_id INTEGER PRIMARY KEY,
+                        contact_id INTEGER UNIQUE,
+                        FOREIGN KEY (contact_id) REFERENCES contacts(contact_id) ON DELETE CASCADE
+                        ); """)
+        conn.commit()
+        cursor.close()
+    except Error as e:
+        print("❗️ Sorry, we encountered an error creating the table: ", e)
+        print("Please contact becki.lee@gmail.com with details so I can help you troubleshoot!")
+        conn.close()
+        exit(1)
 
-# Function to exit the program and save current contact list to phonebook file, using current phonebook as argument
-def exit_app(sorted_entry_list):
-    f = open("bta_phonebook.txt", "w")
-    email_str = str()
-    phone_str = str()
-    # Loop through entries, convert each ID to string, and if there are multiple phone numbers and/or email addresses, join them with a semicolon
-    for entry in sorted_entry_list:
-        id_str = str(entry["id"])
-        email_str = ";".join(entry["email"])
-        phone_str = ";".join(entry["phone"])
-        # Write each converted entry to the phonebook file
-        f.write(entry["fave"] + "," + id_str + "," + entry["first_name"] + "," + entry["last_name"] + "," + phone_str + "," + email_str + "\n")
-    print("\nThanks for using Becki's Totally Awesome Phonebook! Your phonebook has been saved to bta_phonebook.txt.")
-    # Close file when done writing to it
-    f.close()
-    # Exit gracefully
-    sys.exit(0)
+# Validate phone number.
+# Normalize the phone number to E164 format, or format as international,
+# based on parameters from calling function
+def normalize_or_format_phone(raw_phone, operation, default_region="US"):
+    if operation == "normalize":
+        phone_format = phonenumbers.PhoneNumberFormat.E164
+    elif operation == "format":
+        phone_format = phonenumbers.PhoneNumberFormat.INTERNATIONAL
+    else:
+        raise ValueError
+    try:
+        phone_number = phonenumbers.parse(raw_phone, default_region)
+        if phonenumbers.is_valid_number(phone_number) is True and phonenumbers.is_possible_number(phone_number) is True:
+            phone = phonenumbers.format_number(phone_number, phone_format)
+            return phone
+    except phonenumbers.phonenumberutil.NumberParseException as n:
+        print("❗️ Sorry, we encountered an error: ", n)
+    except ValueError as v:
+        print("❗️ Sorry, we encountered a value error: ", v)
+    except Error as e:
+        print("❗️ Sorry, we encountered a general error: ", e)
 
+# Search by name, phone, or email, then show results. Support partial matches.
+def search_contacts(conn):
+    cursor = conn.cursor()
+    while True:
+        choice = input("Enter N to search by name, P to search by phone, or E to search by email: ")
+        if choice.upper() != "N" and choice.upper() != "P" and choice.upper() != "E":
+            print("")
+            print("Sorry, that's not a valid menu option. Please try again.")
+            continue
+        query = input("Enter a search term. Partial matches are supported: ")
+        category_query = f"%{query}%"
+        cursor = conn.cursor()
+        if choice.upper() == "N":
+            sql = f""" SELECT (f.contact_id IS NOT NULL) as is_favorite,
+                                c.contact_id,
+                                c.first_name,
+                                c.last_name,
+                                c.phone,
+                                c.email
+                            FROM contacts c
+                            LEFT JOIN favorites f ON c.contact_id = f.contact_id
+                            WHERE c.first_name LIKE ? OR c.last_name LIKE ?; """
+            cursor.execute(sql, (category_query, category_query))
+        elif choice.upper() == "P":
+            sql = """ SELECT (f.contact_id IS NOT NULL) as is_favorite,
+                                c.contact_id,
+                                c.first_name,
+                                c.last_name,
+                                c.phone,
+                                c.email
+                            FROM contacts c
+                            LEFT JOIN favorites f ON c.contact_id = f.contact_id
+                            WHERE c.phone LIKE ?; """
+            cursor.execute(sql, (category_query, ))
+        elif choice.upper() == "E":
+            sql = """ SELECT (f.contact_id IS NOT NULL) as is_favorite,
+                                c.contact_id,
+                                c.first_name,
+                                c.last_name,
+                                c.phone,
+                                c.email
+                            FROM contacts c
+                            LEFT JOIN favorites f ON c.contact_id = f.contact_id
+                            WHERE c.email LIKE ?; """
+            cursor.execute(sql, (category_query, ))
+        rows = cursor.fetchall()
+        print("")
+        print("Entries matching '" + query + "':")
+        display_contacts_table(rows)
+        break
 
+# List contacts, or print message if no contacts exist
+def list_contacts(conn, contacts_list_type):
+    if contacts_list_type == "all":
+        sql = """ SELECT f.favorite_id,
+                                c.contact_id,
+                                c.first_name,
+                                c.last_name,
+                                c.phone,
+                                c.email
+                            FROM contacts c
+                            LEFT JOIN favorites f ON c.contact_id = f.contact_id; """
+    elif contacts_list_type == "faves":
+        sql = """ SELECT f.favorite_id,
+                                c.contact_id,
+                                c.first_name,
+                                c.last_name,
+                                c.phone,
+                                c.email
+                            FROM contacts c
+                            JOIN favorites f ON c.contact_id = f.contact_id
+                            ORDER BY c.contact_id ASC; """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        print("")
+        display_contacts_table(rows)
+        cursor.close()
+    except Error as e:
+        print("❗️ Sorry, we encountered an error: ", e)
+        print("")
 
-# Call function to load the phonebook
-entry_list = load()
+# Display the contacts table nicely
+def display_contacts_table(rows):
+    if len(rows) == 0:
+        print("No contacts found.")
+        print("")
+        return False
+    else:
+        value_matrix = [[str(row[0]), str(row[1]), row[2] + " " + row[3], normalize_or_format_phone(row[4], operation="format"), row[5]] for row in rows]
+        for column in value_matrix:
+            if column[0] != "None" and column[0] != "0":
+                column[0] = "💖"
+            else:
+                column[0] = ""
+        writer = SpaceAlignedTableWriter(
+            table_name="Contacts",
+            headers=["💖", "ID", "NAME", "PHONE", "EMAIL"],
+            value_matrix=value_matrix,
+            margin=1
+        )
+        writer.write_table()
+        writer.close()
+        print("")
 
-print("========================BECKI'S TOTALLY AWESOME PHONEBOOK=======================")
+# Add a new contact
+def add_contact(conn):
+    try:
+        print("Enter the contact's information.")
+        first_name = input("Enter FIRST NAME: ")
+        last_name = input("Enter LAST NAME: ")
+        while True:
+            unformatted_phone = input("Enter PHONE NUMBER. Non-US phone numbers must begin with\n    a plus sign and country code (for example, +44): ")
+            phone = normalize_or_format_phone(unformatted_phone, operation="normalize")
+            if phone is None:
+                print("Please enter a valid phone number.")
+                continue
+            else:
+                break
+        email = input("Enter EMAIL ADDRESS: ")
+        is_favorite = confirm_contact("favorite", "skip")
+        sql_contacts = """ INSERT into contacts (first_name, last_name, phone, email)
+                VALUES(?,?,?,?) """
+        sql_favorites = "INSERT into favorites (contact_id) VALUES(?)"
+        cursor = conn.cursor()
+        cursor.execute(sql_contacts, (first_name, last_name, phone, email))
+        conn.commit()
+        contact_id = cursor.lastrowid
+        if is_favorite is True:
+            cursor.execute(sql_favorites, (contact_id,))
+            conn.commit()
+        cursor.close()
+        print("")
+        print("👍 Contact added!")
+        print("")
+        return cursor.lastrowid
+    except Error as e:
+        print(e)
+        print("")
 
-# Call function to display main menu
-menu(entry_list)
+# Look up contact by ID, or print message if ID does not exist
+def look_up_contact_by_id(conn, id):
+    is_found = False
+    cursor = conn.cursor()
+    try:
+        cursor.execute(""" SELECT (f.contact_id IS NOT NULL) as is_favorite,
+                                c.contact_id,
+                                c.first_name,
+                                c.last_name,
+                                c.phone,
+                                c.email
+                            FROM contacts c
+                            LEFT JOIN favorites f ON c.contact_id = f.contact_id
+                            WHERE c.contact_id = ?; """, (id,))
+        rows = cursor.fetchall()
+        print("")
+        display_contacts_table(rows)
+        print("")
+        if len(rows) != 0:
+            is_found = True
+    except Error as e:
+        print("❗️ Sorry, we encountered an error: ", e)
+        print("")
+        is_found = False
+    return is_found
+
+# Delete or update the contact, depending on parameter passed from calling function
+def delete_or_update(conn, operation):
+    while True:
+        choice = input("Enter an ID to " + operation + " a contact, L to list contacts, or Q to quit: ")
+        if choice.upper() == "L":
+            list_contacts(conn, "all")
+        elif choice.upper() == "Q":
+            print("")
+            print("Canceled " + operation + ". Returning to main menu.")
+            print("")
+            break
+        else:
+            if not choice.isdigit():
+                print("")
+                print("Please enter a numeric ID.")
+                print("")
+                continue
+            contact_id = int(choice)
+            if not look_up_contact_by_id(conn, contact_id):
+                continue
+            if operation == "update":
+                if confirm_contact("update", "cancel"):
+                    perform_contact_update(conn, contact_id)
+                    break
+            elif operation == "delete":
+                print("⚠️ Delete this contact?")
+                if confirm_contact("delete", "cancel"):
+                    perform_contact_delete(conn, contact_id)
+                    break
+            else:
+                print("")
+                print("Contact was not updated.")
+
+# Confirm operation (can be update, delete, or set favorite)
+def confirm_contact(action, cancel_action):
+    is_confirmed = False
+    while True:
+        choice_confirm = input("Enter Y to " + action + " this contact, or N to " + cancel_action + ": ")
+        if choice_confirm.upper() == "Y":
+            print("")
+            is_confirmed = True
+            break
+        elif choice_confirm.upper() == "N":
+            break
+        else:
+            print("")
+            print("Please enter Y for yes, or N for no.")
+            continue
+    return is_confirmed
+
+# Request new contact details from user
+def get_updated_contact_details(existing_contact_info):
+    new_first_name = input("Enter FIRST NAME, or leave blank to keep current value: ") or existing_contact_info[0]
+    new_last_name = input("Enter LAST NAME, or leave blank to keep current value: ") or existing_contact_info[1]
+    while True:
+        new_phone = input("Enter PHONE NUMBER, or leave blank to keep current value. Non-US phone numbers must\n      begin with plus sign and country code (for example, +44): ") or existing_contact_info[2]
+        if not normalize_or_format_phone(new_phone, operation="normalize"):
+            print("Please enter a valid phone number.")
+            continue
+        else:
+            break
+    new_email = input("Enter EMAIL ADDRESS, or leave blank to keep current value: ") or existing_contact_info[3]
+    updated_contact_info = (new_first_name, new_last_name, new_phone, new_email)
+    return updated_contact_info
+
+# Ask user if they want to set the contact as a favorite.
+# Check whether the contact is already a favorite.
+def update_favorites(conn, contact_id):
+    cursor = conn.cursor()
+    is_favorite = confirm_contact("favorite", "skip")
+    sql_look_up_favorites = "SELECT favorite_id FROM favorites WHERE contact_id = ?"
+    sql_favorites = "INSERT into favorites (contact_id) VALUES(?)"
+    cursor.execute(sql_look_up_favorites, (contact_id, ))
+    favorite_exists = cursor.fetchone()
+    if is_favorite is True and favorite_exists is None:
+        cursor.execute(sql_favorites, (contact_id, ))
+        conn.commit()
+    elif is_favorite is False and favorite_exists is not None:
+        cursor.execute("DELETE FROM favorites WHERE contact_id = ?", (contact_id, ))
+        conn.commit()
+        print("")
+
+# Commit update operation
+def perform_contact_update(conn, contact_id):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT first_name, last_name, phone, email FROM contacts WHERE contact_id = ?", (contact_id,))
+        existing_contact_info = cursor.fetchone()
+        updated_contact_info = get_updated_contact_details(existing_contact_info)
+        sql_contacts = """ UPDATE contacts
+                SET first_name = ?,
+                    last_name = ?,
+                    phone = ?,
+                    email = ?
+                WHERE contact_id = ? """
+        cursor.execute(sql_contacts, (updated_contact_info[0], updated_contact_info[1], updated_contact_info[2], updated_contact_info[3], contact_id))
+        conn.commit()
+        update_favorites(conn, contact_id)
+        cursor.close()
+        print("👍 Contact updated!")
+        print("")
+        return cursor.lastrowid
+    except Error as e:
+        print("❗️ Sorry, we encountered an error: ", e)
+        print("")
+
+# Commit delete operation
+def perform_contact_delete(conn, id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM contacts WHERE contact_id = ?", (id,))
+        conn.commit()
+        print("🗑️ Contact deleted!")
+        print("")
+        cursor.close()
+    except Error as e:
+        print("❗️ Sorry, we encountered an error: ", e)
+        print("")
+
+# Close database connection
+def close_connection(conn):
+    if conn:
+        conn.close()
+
+# Print the main menu and loop until user chooses to exit
+def main_menu(conn):
+    print("============= ✨ BECKI'S TOTALLY AWESOME PHONEBOOK APP ✨ ==============")
+    print("")
+    print("S - 🔎 SEARCH contacts")
+    print("L - 📋 LIST all contacts")
+    print("F - 💖 Show FAVORITE contacts")
+    print("A - ➕ ADD a new contact")
+    print("U - ☝️  UPDATE a contact")
+    print("D - ❌ DELETE a contact")
+    print("Q - 🚪 QUIT this application")
+    print("")
+    choice = input("Enter a letter to take an action: ")
+    if choice.upper() == "S":
+        search_contacts(conn)
+    elif choice.upper() == "L":
+        list_contacts(conn, "all")
+    elif choice.upper() == "F":
+        list_contacts(conn, "faves")
+    elif choice.upper() == "A":
+        add_contact(conn)
+    elif choice.upper() == "U":
+        delete_or_update(conn, "update")
+    elif choice.upper() == "D":
+        delete_or_update(conn, "delete")
+    elif choice.upper() == "Q":
+        close_connection(conn)
+        print("")
+        print("👋 Thanks for using BECKI'S TOTALLY AWESOME PHONEBOOK APP! Goodbye!")
+        exit()
+    else:
+        print("")
+        print("Sorry, that's not a valid menu option. Please try again.")
+        print("")
+
+# Do the thing!
+if __name__ == "__main__":
+    connection = create_connection()
+    create_contacts_table(connection)
+    create_faves_table(connection)
+    while True:
+        main_menu(connection)
