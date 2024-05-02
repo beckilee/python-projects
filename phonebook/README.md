@@ -2,7 +2,9 @@
 
 **Becki's Totally Awesome Phonebook** is an interactive Python script that saves contact information into a local SQLite database.
 
-It offers the following features:
+![Phonebook demo](phonebook.gif)
+
+**Becki's Totally Awesome Phonebook** offers the following features:
 
 - [Add](#add-a-new-contact), [update](#update-a-contact), and [delete](#delete-a-contact) a contact
 - Mark a contact as a "favorite"
